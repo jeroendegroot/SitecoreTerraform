@@ -48,6 +48,7 @@ Set-Location C:\windows\system32\inetsrv\
 .\appcmd add site /name:tfsitecore /physicalPath:"$scroot\Website" /bindings:http/*:80:$Dnl.$region.cloudapp.azure.com
 .\appcmd set app "tfsitecore/" /applicationPool:"tfSitecore"
 
+Write-Host "Create ConnectionStrings.config file"
 [xml]$Doc = New-Object System.Xml.XmlDocument
 $dec = $Doc.CreateXmlDeclaration("1.0","UTF-8",$null)
 
@@ -97,14 +98,17 @@ $doc.save($Path)
 Set-Location "$scroot\Website"
 mkdir data
 
+Write-Host "Download and set license file"
 Invoke-WebRequest -Uri $License -outfile "$scroot\Website\data\license.xml"
 
+Write-Host "Download and set xDB disable config file"
 Invoke-WebRequest -Uri $xDbDisable -outfile "$scroot\Website\App_Config\include\xDB.disable.config"
 
+Write-Host "Give app pool permission to site"
 $acl = Get-Acl -Path "$scroot"
 
 $ace = New-Object System.Security.Accesscontrol.FileSystemAccessRule ("iis apppool\tfSitecore", "FullControl", "ContainerInherit,ObjectInherit", "InheritOnly", "Allow")
 $acl.AddAccessRule($ace)
 Set-Acl -Path $scroot -AclObject $acl
 
-Read-Host -Prompt "Press Enter to exit"
+Read-Host -Prompt "Setup complete. Press Enter to exit"
